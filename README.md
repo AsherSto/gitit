@@ -1,2 +1,8 @@
 # gitit
-Pull git repo's and set up a vs code live server with recommended extensions
+
+Pull git repositories and set up a VS Code instance with recommended extensions.
+
+## Usage
+
+```sh
+python3 main.py gitit <repourl>
