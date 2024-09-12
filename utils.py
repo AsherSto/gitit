@@ -1,18 +1,27 @@
-import os
 import subprocess
 
-import os
-import subprocess
+def change_directory(repo_name):
+    target_directory = os.path.join("repos", repo_name)
+    if not os.path.exists(target_directory):
+        raise FileNotFoundError(f"The directory {target_directory} does not exist.")
+    os.chdir(target_directory)
 
 def spin_up_vscode(github_link, branch="main"):
-    subprocess.run(["git", "clone", "-b", branch, github_link])
+    if not os.path.exists("repos"):
+        os.makedirs("repos")
+    subprocess.run(["git", "clone", "-b", branch, github_link, "repos/" + os.path.basename(github_link.rstrip(".git"))])
 
     repo_name = os.path.basename(github_link.rstrip(".git"))
 
-    os.chdir(repo_name)
-
     try:
-        language = detect_language()
+        change_directory(repo_name)
+    except FileNotFoundError as e:
+        print(e)
+        return
+
+    # Detect the languages of the files inside the repository
+    try:
+        languages = detect_languages()
     except ValueError as e:
         print(e)
         return
@@ -27,15 +36,16 @@ def spin_up_vscode(github_link, branch="main"):
         # Add more languages and their extensions as needed
     }
 
-    if language in extensions:
-        for extension in extensions[language]:
-            subprocess.run(["code", "--install-extension", extension])
+    for language, _ in languages:
+        if language in extensions:
+            for extension in extensions[language]:
+                subprocess.run(["code", "--install-extension", extension])
 
     subprocess.run(["code", "."])
 
 import os
 
-def detect_language():
+def detect_languages():
     language_extensions = {
         'Python': ['.py'],
         'JavaScript': ['.js'],
@@ -61,5 +71,6 @@ def detect_language():
     if not language_count:
         raise ValueError("No languages detected in the repository")
 
-    detected_language = max(language_count, key=language_count.get)
-    return detected_language
+    detected_languages = sorted(language_count.items(), key=lambda item: item[1], reverse=True)
+    print(f"Detected languages: {detected_languages}")
+    return detected_languages
