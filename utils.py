@@ -6,7 +6,10 @@ def change_directory(repo_name):
         raise FileNotFoundError(f"The directory {target_directory} does not exist.")
     os.chdir(target_directory)
 
-def spin_up_vscode(github_link, branch="main"):
+def spinupdockercontainer():
+    subprocess.run(["docker", "run", "-it", "--rm", "-v", f"{os.getcwd()}:/workspace", "codercom/code-server"])
+
+def spin_up_vscode(github_link, branch="main", docker=False):
     if not os.path.exists("repos"):
         os.makedirs("repos")
     subprocess.run(["git", "clone", "-b", branch, github_link, "repos/" + os.path.basename(github_link.rstrip(".git"))])
@@ -35,13 +38,22 @@ def spin_up_vscode(github_link, branch="main"):
         "C": ["ms-vscode.cpptools", "twxs.cmake"],
         # Add more languages and their extensions as needed
     }
+    if docker == False:
+        for language, _ in languages:
+            if language in extensions:
+                for extension in extensions[language]:
+                    subprocess.run(["code", "--install-extension", extension])
 
-    for language, _ in languages:
-        if language in extensions:
-            for extension in extensions[language]:
-                subprocess.run(["code", "--install-extension", extension])
+        subprocess.run(["code", "."])
+    else:
+        spinupdockercontainer()
+        for language, _ in languages:
+            if language in extensions:
+                for extension in extensions[language]:
+                    subprocess.run(["docker", "exec", "code-server", "code-server", "--install-extension", extension])
+                    
 
-    subprocess.run(["code", "."])
+        
 
 import os
 
